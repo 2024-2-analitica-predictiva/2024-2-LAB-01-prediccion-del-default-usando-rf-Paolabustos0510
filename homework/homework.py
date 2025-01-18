@@ -85,8 +85,10 @@ def cargar_limpiar_dataset(nombre_archivo):
 
     return datos
 
-datos_entrenamiento = cargar_limpiar_dataset(os.path.join(os.path.dirname(__file__),"../files/input/train_default_of_credit_card_clients.csv"))
-datos_prueba = cargar_limpiar_dataset(os.path.join(os.path.dirname(__file__),"../files/input/test_default_of_credit_card_clients.csv"))
+datos_entrenamiento = cargar_limpiar_dataset("files/input/train_default_of_credit_card_clients.csv")
+datos_prueba = cargar_limpiar_dataset("files/input/test_default_of_credit_card_clients.csv")
+print(datos_prueba.head())
+
 
 
 # Paso 2.
@@ -174,7 +176,7 @@ mejor_resultado = busqueda_malla.best_score_
 print("Parámetros encontrados: ", mejores_parametros)
 print("Mejor resultado: ", mejor_resultado)
 
-with open(os.path.join(os.path.dirname(__file__),"../files/models/model.pkl", "wb")) as archivo:
+with open("files/models/model.pkl", "wb") as archivo:
     pickle.dump(busqueda_malla, archivo)
 
 # Paso 6.
@@ -203,15 +205,28 @@ def calcular_metricas(modelo, x, y, tipo_dataset):
 
     return diccionario_metricas
 
+def calcular_matriz_confusion(modelo, x, y, tipo_dataset):
+    matriz_con = confusion_matrix(y, modelo.predict(x))
+    diccionario_matriz = {
+        "type": "cm_matrix",
+        "dataset": tipo_dataset,
+        "true_0": {"predicted_0": int(matriz_con[0, 0]), "predicted_1": int(matriz_con[0, 1])},
+        "true_1": {"predicted_0": int(matriz_con[1, 0]), "predicted_1": int(matriz_con[1, 1])},
+    }
+    return diccionario_matriz
+
 
 # Guardar métricas y matrices de consufión
 valores = [
     calcular_metricas(mejor_modelo, x_train, y_train, "train"),
     calcular_metricas(mejor_modelo, x_test, y_test, "test"),
+    calcular_matriz_confusion(mejor_modelo, x_train, y_train,"train"),
+    calcular_matriz_confusion(mejor_modelo, x_test, y_test, "test"),
 ]
 
+
 # Guardar archivo JSON
-with open(os.path.join(os.path.dirname(__file__),"../files/output/metrics.json", "w")) as archivo:
+with open("files/output/metrics.json", "w") as archivo:
     for v in valores:
         json.dump(v, archivo)
         archivo.write("\n")
@@ -228,25 +243,5 @@ with open(os.path.join(os.path.dirname(__file__),"../files/output/metrics.json",
 # {'type': 'cm_matrix', 'dataset': 'test', 'true_0': {"predicted_0": 15562, "predicte_1": 650}, 'true_1': {"predicted_0": 2490, "predicted_1": 1420}}
 
 
-# Función para calcular matriz de confusión
-def calcular_matriz_confusion(modelo, x, y, tipo_dataset):
-    matriz_con = confusion_matrix(y, modelo.predict(x))
-    diccionario_matriz = {
-        "type": "cm_matrix",
-        "dataset": tipo_dataset,
-        "true_0": {"predicted_0": int(matriz_con[0, 0]), "predicted_1": int(matriz_con[0, 1])},
-        "true_1": {"predicted_0": int(matriz_con[1, 0]), "predicted_1": int(matriz_con[1, 1])},
-    }
-    return diccionario_matriz
 
-# Guardar métricas y matrices de consufión
-valores = [
-    calcular_matriz_confusion(mejor_modelo, x_train, y_train,"train"),
-    calcular_matriz_confusion(mejor_modelo, x_test, y_test, "test"),
-]
 
-# Guardar archivo JSON
-with open(os.path.join(os.path.dirname(__file__),"../files/output/metrics.json", "w")) as archivo:
-    for v in valores:
-        json.dump(v, archivo)
-        archivo.write("\n")
